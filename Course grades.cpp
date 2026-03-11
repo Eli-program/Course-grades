@@ -9,82 +9,78 @@
 using namespace std;
 
 struct Student {
-    string name;
-    string id;
-    vector<int> tests;
-
-    double overall() const {
-        if (tests.empty()) return 0.0;
-        double sum = 0;
-        for (int t : tests) sum += t;
-        return sum / tests.size();
-    }
+	string name;
 };
 
-static string toLower(const string& s) {
-    string out = s;
-    transform(out.begin(), out.end(), out.begin(),
-        [](unsigned char c) { return tolower(c); });
-    return out;
-}
+struct StudentID {
+	string id;
+};
+
+struct TestScore {
+	double score1;
+	double score2;
+	double score3;
+	double score4;
+};
+
+struct Grade {
+	double grade;
+};
 
 int main() {
-    ifstream studentFile("C:/Users/elija/Downloads/student_data.txt");
-    if (!studentFile) {
-        cerr << "Error: could not open student_data.txt\n";
-        return 1;
-    }
+	ifstream file("C:/Users/elija/Downloads/student_data.txt");
+	if (!file.is_open()) {
+		cerr << "Error opening file!" << endl;
+		return 1;
+	}
+	vector<Student> students;
+	vector<StudentID> studentIDs;
+	vector<TestScore> testScores;
+	vector<Grade> grades;
+	string line;
+	while (getline(file, line)) {
+		istringstream iss(line);
+		string name, id;
+		double t1, t2, t3, t4;
+		double grade;
+		// layout
+		if (!(iss >> name >> id >> t1 >> t2 >> t3 >> t4 >> grade)) {
+			cerr << "Error parsing line: " << line << endl;
+			continue; 
+		}
+		students.push_back({name});
+		studentIDs.push_back({id});
+		testScores.push_back({ t1, t2, t3, t4 });
+		grades.push_back({grade});
+	}
+	file.close();
 
-    string line;
-    vector<Student> students;
+	// Column widths
+	const int nameW = 20;
+	const int idW = 15;
+	const int testW = 7;
+	const int overallW = 10;
+	const int totalWidth = nameW + idW + 4 * testW + overallW;
 
-    
-    while (getline(studentFile, line)) {
-        if (line.empty()) continue;
-        istringstream iss(line);
-        Student s;
+	cout << left << setw(nameW) << "Name" << setw(idW) << "Student ID";
+	cout << right << setw(testW) << "T1" << setw(testW) << "T2" << setw(testW) << "T3" << setw(testW) << "T4";
+	cout << setw(overallW) << "Grade" << endl;
+	cout << string(totalWidth, '-') << endl;
 
-        string first, second;
-        if (!(iss >> first)) continue;            
-        if (!(iss >> second)) {                 
-            s.name = first;
-            students.push_back(move(s));
-            continue;
-        }
+	for (size_t i = 0; i < students.size(); ++i) {
+		cout << left << setw(nameW) << students[i].name 
+			 << setw(idW) << studentIDs[i].id;
 
-       
-        string third;
-        if (!(iss >> third)) {
-           
-            s.name = first + " " + second;
-            students.push_back(move(s));
-            continue;
-        }
+		
+		cout << right << fixed << setprecision(1)
+			 << setw(testW) << testScores[i].score1
+			 << setw(testW) << testScores[i].score2
+			 << setw(testW) << testScores[i].score3
+			 << setw(testW) << testScores[i].score4;
 
-        
-        s.name = first + " " + second;
-        s.id = third;
-
-        int score;
-        while (iss >> score) {
-            s.tests.push_back(score);
-        }
-
-        students.push_back(move(s));
-    }
-
-    // Sort by student name
-    sort(students.begin(), students.end(),
-        [](const Student& a, const Student& b) {
-            return toLower(a.name) < toLower(b.name);
-        });
-
-    for (const auto& st : students) {
-        cout << st.name;
-        if (!st.id.empty()) cout << ' ' << st.id;
-        for (int t : st.tests) cout << ' ' << t;
-        cout << ' ' << fixed << setprecision(1) << st.overall() << '\n';
-    }
-
-    return 0;
+		
+		cout << setw(overallW) << setprecision(2) << grades[i].grade 
+			 << endl;
+	}
+	return 0;
 }
